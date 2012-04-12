@@ -26,6 +26,7 @@ class User < ActiveRecord::Base
                        :confirmation => true,
                        :length       => { :within => 6..40 }
 
+  # this might be preventing me from saving the last_sign_in_time for the Remember Me feature
   before_save :encrypt_password
 
   # Return true if the user's password matches the submitted password.
@@ -44,6 +45,10 @@ class User < ActiveRecord::Base
   def self.authenticate_with_salt(id, cookie_salt)
     user = find_by_id(id)
     (user && user.salt == cookie_salt) ? user : nil
+  end
+
+  def just_logged_in
+    self.last_sign_in_time = DateTime.now
   end
 
   private

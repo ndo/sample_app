@@ -13,6 +13,9 @@ class SessionsController < ApplicationController
       render 'new'
     else
       sign_in user
+      u = User.find_by_email(params[:session][:email])
+      u.just_logged_in
+      u.save
       redirect_to user
     end
   end
