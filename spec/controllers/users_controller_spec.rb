@@ -6,10 +6,24 @@ describe UsersController do
   describe "GET 'index'" do
 
     describe "for non-signed-in users" do
-      it "should deny access" do
+
+      it "should be sucessful" do
         get :index
-        response.should redirect_to(signin_path)
-        flash[:notice].should =~ /sign in/i
+        response.should be_success
+      end
+
+      it "should only show public profiles" do
+        public_profile_user  = Factory(:user, :name => "Ben", :email => "another@example.net",
+                                       :public_profile => true)
+        get :index
+        response.should have_selector("li", :content => public_profile_user.name)
+      end
+
+      it "should not show private profiles" do
+        private_profile_user = Factory(:user, :name => "Bob", :email => "another@example.com",
+                                       :public_profile => false)
+        get :index
+        response.should_not have_selector("li", :content => private_profile_user.name)
       end
     end
 
@@ -53,38 +67,90 @@ describe UsersController do
         response.should have_selector("a", :href => "/users?page=2",
                                            :content => "Next")
       end
+
+      it "should show public profiles" do
+        public_profile_user  = Factory(:user, :name => "Ben", :email => "another1@example.net",
+                                       :public_profile => true)
+        get :index
+        response.should have_selector("li", :content => public_profile_user.name)
+      end
+
+      it "should show private profiles" do
+        private_profile_user = Factory(:user, :name => "Bob", :email => "another2@example.com",
+                                       :public_profile => false)
+        get :index
+        response.should have_selector("li", :content => private_profile_user.name)
+      end
     end
   end
 
   describe "GET 'show'" do
 
-    before(:each) do
-      @user = Factory(:user)
+    describe "for non-signed-in users" do
+
+      before(:each) do
+        public_profile_user  = Factory(:user, :name => "Ben", :email => "another1@example.net",
+                                       :public_profile => true)
+        private_profile_user = Factory(:user, :name => "Bob", :email => "another2@example.com",
+                                       :public_profile => false)
+      end
+
+      it "should be successful for public profile" do
+        get :show, :id => public_profile_user
+        response.should be_success
+      end
+
+      it "should NOT be successful for private profile" do
+        get :show, :id => private_profile_user
+        response.should_not be_success
+      end
+
     end
 
-    it "should be successful" do
-      get :show, :id => @user
-      response.should be_success
-    end
+    describe "for signed-in users" do
 
-    it "should find the right user" do
-      get :show, :id => @user
-      assigns(:user).should == @user
-    end
+      before(:each) do
+        @user = test_sign_in(Factory(:user))
+        public_profile_user  = Factory(:user, :name => "Ben", :email => "another1@example.net",
+                                       :public_profile => true)
+        private_profile_user = Factory(:user, :name => "Bob", :email => "another2@example.com",
+                                       :public_profile => false)
+      end
 
-    it "should have the right title" do
-      get :show, :id => @user
-      response.should have_selector("title", :content => @user.name)
-    end
+      it "should be successful" do
+        get :show, :id => @user
+        response.should be_success
+      end
 
-    it "should include the user's name" do
-      get :show, :id => @user
-      response.should have_selector("h1", :content => @user.name)
-    end
+      it "should find the right user" do
+        get :show, :id => @user
+        assigns(:user).should == @user
+      end
 
-    it "should have a profile image" do
-      get :show, :id => @user
-      response.should have_selector("h1>img", :class => "gravatar")
+      it "should have the right title" do
+        get :show, :id => @user
+        response.should have_selector("title", :content => @user.name)
+      end
+
+      it "should include the user's name" do
+        get :show, :id => @user
+        response.should have_selector("h1", :content => @user.name)
+      end
+
+      it "should have a profile image" do
+        get :show, :id => @user
+        response.should have_selector("h1>img", :class => "gravatar")
+      end
+
+      it "should be successful for public profile" do
+        get :show, :id => public_profile_user
+        response.should be_success
+      end
+
+      it "should be successful for private profile" do
+        get :show, :id => private_profile_user
+        response.should be_success
+      end
     end
   end
 
@@ -210,7 +276,8 @@ describe UsersController do
 
       before(:each) do
         @attr = { :name => "New Name", :email => "user@example.org",
-                  :password => "barbaz", :password_confirmation => "barbaz" }
+                  :password => "barbaz", :password_confirmation => "barbaz",
+                  :public_profile => false }
       end
 
       it "should change the user's attributes" do
@@ -218,6 +285,7 @@ describe UsersController do
         @user.reload
         @user.name.should  == @attr[:name]
         @user.email.should == @attr[:email]
+        @user.public_profile.should == @attr[:public_profile]
       end
 
       it "should redirect to the user show page" do

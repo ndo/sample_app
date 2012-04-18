@@ -19,7 +19,7 @@
     <%= f.password_field :password_confirmation %>
   </div>
   <div class="actions">
-    <%= f.submit "Update" %>
+    <%= f.submit "Update" %> <%= f.check_box :public_profile %> <%= f.label(:public_profile, "Make my profile public") %>
   </div>
 <% end %>
 
