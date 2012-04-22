@@ -1,16 +1,24 @@
 class UsersController < ApplicationController
-  before_filter :authenticate, :only => [:index, :edit, :update, :destroy]
+  before_filter :authenticate, :only => [:edit, :update, :destroy]
   before_filter :correct_user, :only => [:edit, :update]
   before_filter :admin_user,   :only => :destroy
 
   def index
     @title = "All users"
-    @users = User.paginate(:page => params[:page])
+    if signed_in?
+      @users = User.paginate(:page => params[:page])
+    else
+      @users = User.find_all_by_public_profile(true).paginate(:page => params[:page])
+    end
   end
 
   def show
     @user = User.find(params[:id])
     @title = @user.name
+
+    if @user.public_profile == false
+      authenticate
+    end
   end
   
   def new

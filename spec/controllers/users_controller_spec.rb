@@ -88,19 +88,16 @@ describe UsersController do
 
     describe "for non-signed-in users" do
 
-      before(:each) do
+      it "should be successful for public profile" do
         public_profile_user  = Factory(:user, :name => "Ben", :email => "another1@example.net",
                                        :public_profile => true)
-        private_profile_user = Factory(:user, :name => "Bob", :email => "another2@example.com",
-                                       :public_profile => false)
-      end
-
-      it "should be successful for public profile" do
         get :show, :id => public_profile_user
         response.should be_success
       end
 
       it "should NOT be successful for private profile" do
+        private_profile_user  = Factory(:user, :name => "Bob", :email => "another2@example.com",
+                                        :public_profile => false)
         get :show, :id => private_profile_user
         response.should_not be_success
       end
@@ -111,10 +108,6 @@ describe UsersController do
 
       before(:each) do
         @user = test_sign_in(Factory(:user))
-        public_profile_user  = Factory(:user, :name => "Ben", :email => "another1@example.net",
-                                       :public_profile => true)
-        private_profile_user = Factory(:user, :name => "Bob", :email => "another2@example.com",
-                                       :public_profile => false)
       end
 
       it "should be successful" do
@@ -143,11 +136,15 @@ describe UsersController do
       end
 
       it "should be successful for public profile" do
+        public_profile_user  = Factory(:user, :name => "Ben", :email => "another1@example.net",
+                                       :public_profile => true)
         get :show, :id => public_profile_user
         response.should be_success
       end
 
       it "should be successful for private profile" do
+        private_profile_user = Factory(:user, :name => "Bob", :email => "another2@example.com",
+                                       :public_profile => false)
         get :show, :id => private_profile_user
         response.should be_success
       end
